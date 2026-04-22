@@ -1,5 +1,5 @@
-#@author Meysam
-#@category macOS.kernel
+# @author Meysam
+# @category macOS.kernel
 
 import os
 import json
@@ -12,31 +12,69 @@ FUNC_SIZE = 1
 FUNC_OPCODES = 2
 FUNC_NAME = 3
 
+
 def assemble_opcode(assembler, address, opcode):
-     assembler.assemble(address, opcode)
-     return address.add(INSTRUCTION_SIZE) # size of each inst
+    assembler.assemble(address, opcode)
+    return address.add(INSTRUCTION_SIZE)  # size of each inst
+
 
 def check_nonrelative(inst):
 
     Instruction = [
-        'and',  'ldadd',   'stur',  'mov',
-        'add',   'str',    'ldp',   'bfxil'
-        'stp',   'mul',    'lsl',   'sub',
-        'lsr',   'cmp',    'tst',   'ldur',
-        'orn',   'bic',    'cmn',   'eon',
-        'neg',   'adc',    'mvn',   'ana',
-        'eor',   'sbc',    'orr',   'ldset',
-        'ubfx',  'msub',   'udiv',  'cmhs',
-        'xtn',   'fmov',   'sxtw',  'ccmp',
-        'asr',   'strb',   'sbfx',  'bfi',
-        'strh',  'xtn',    'uxtn',  'sxtw',
-        'sxtb',  'sxth',   'uxth',  'uxtb'
-        ]
+        "and",
+        "ldadd",
+        "stur",
+        "mov",
+        "add",
+        "str",
+        "ldp",
+        "bfxil" "stp",
+        "mul",
+        "lsl",
+        "sub",
+        "lsr",
+        "cmp",
+        "tst",
+        "ldur",
+        "orn",
+        "bic",
+        "cmn",
+        "eon",
+        "neg",
+        "adc",
+        "mvn",
+        "ana",
+        "eor",
+        "sbc",
+        "orr",
+        "ldset",
+        "ubfx",
+        "msub",
+        "udiv",
+        "cmhs",
+        "xtn",
+        "fmov",
+        "sxtw",
+        "ccmp",
+        "asr",
+        "strb",
+        "sbfx",
+        "bfi",
+        "strh",
+        "xtn",
+        "uxtn",
+        "sxtw",
+        "sxtb",
+        "sxth",
+        "uxth",
+        "uxtb",
+    ]
 
     for i in Instruction:
         if inst.startswith(i):
             return True
     return False
+
 
 def get_kext(kext):
     program = currentProgram
@@ -96,8 +134,9 @@ ingnore_list = [
     "get_preemption_level",
     "vm_memtag_add_ptr_tag",
     "ml_static_unslide",
-    "vm_is_addr_slid"
+    "vm_is_addr_slid",
 ]
+
 
 def ingnore_me(path):
 
@@ -112,11 +151,11 @@ def get_path(patterns):
 
     command = [
         "dwarfdump",
-        "/Users/meysam/project/Pishi/kernels/Kernels/kernel.release.vmapple.dSYM/Contents/Resources/DWARF/kernel.release.vmapple"
+        "/Users/meysam/project/Pishi/kernels/Kernels/kernel.release.vmapple.dSYM/Contents/Resources/DWARF/kernel.release.vmapple",
     ]
 
     result = subprocess.check_output(command)
-    decoded_result = result.decode('ascii', errors='ignore')
+    decoded_result = result.decode("ascii", errors="ignore")
     lines = decoded_result.splitlines()
     map_name_line = []
     for index, line in enumerate(lines):
@@ -125,9 +164,23 @@ def get_path(patterns):
         if "DW_TAG_subprogram" in line:
             for i in range(1, 10):
                 if index + i < len(lines) and "DW_AT_name" in lines[index + i]:
-                    name = lines[index + i].replace("DW_AT_name", "").strip().replace("(", "").replace(")", "").replace("\"", "")
+                    name = (
+                        lines[index + i]
+                        .replace("DW_AT_name", "")
+                        .strip()
+                        .replace("(", "")
+                        .replace(")", "")
+                        .replace('"', "")
+                    )
                 if index + i < len(lines) and "DW_AT_decl_file" in lines[index + i]:
-                    line_name = lines[index + i].replace("DW_AT_decl_file", "").strip().replace("(", "").replace(")", "").replace("\"", "")
+                    line_name = (
+                        lines[index + i]
+                        .replace("DW_AT_decl_file", "")
+                        .strip()
+                        .replace("(", "")
+                        .replace(")", "")
+                        .replace('"', "")
+                    )
         if name and line_name:
             if ingnore_me(line_name):
                 continue
@@ -136,6 +189,7 @@ def get_path(patterns):
                     map_name_line.append(str(name))
 
     return map_name_line
+
 
 osfmk = [
     "/osfmk/ipc",
@@ -233,17 +287,14 @@ osfmk = [
     "osfmk/kern/ux_handler.c",
     "osfmk/kern/waitq.c",
     "osfmk/kern/work_interval.c",
-    "osfmk/kern/workload_config.c"
-    "osfmk/kern/test_mpsc_queue.c",
-    "osfmk/kern/testpoints.c",  
-
+    "osfmk/kern/workload_config.c" "osfmk/kern/test_mpsc_queue.c",
+    "osfmk/kern/testpoints.c",
     # "osfmk/kern/thread_act.c",
     # "osfmk/kern/thread.c",
     # "osfmk/kern/thread_call.c",
     # "osfmk/kern/thread_group.c",
     # "osfmk/kern/thread_policy.c",
-   
-    ]
+]
 
 bsd_net = ["bsd/net", "bsd/netinet", "bsd/netinet6", "bsd/netkey"]
 
@@ -255,61 +306,69 @@ def main():
     instrument_functions = []
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
-
-    map_name_line = map_name_line = get_path(osfmk) # get pattern from config
+    map_name_line = map_name_line = get_path(osfmk)  # get pattern from config
 
     kernel_text_start, kernel_text_end = get_kext("kernel.release.vmapple")
 
     kc_functions = function_manager.getFunctions(True)
     comapre = []
-    instrument_functions.append([str(kernel_text_start), "", "", "kernel.release.vmapple"])
+    instrument_functions.append(
+        [str(kernel_text_start), "", "", "kernel.release.vmapple"]
+    )
     for function in kc_functions:
-            function_address = function.getEntryPoint()
-            functionBody = function.getBody()
-            functionSize = functionBody.getNumAddresses()
+        function_address = function.getEntryPoint()
+        functionBody = function.getBody()
+        functionSize = functionBody.getNumAddresses()
 
-            instresting_path = False
-            f_name = str(function.name)
-            for i in map_name_line: # WTH the "in" is not working
-                if i == f_name:
-                    instresting_path = True
+        instresting_path = False
+        f_name = str(function.name)
+        for i in map_name_line:  # WTH the "in" is not working
+            if i == f_name:
+                instresting_path = True
+                break
+
+        if instresting_path is False:
+            continue
+
+        if functionSize < INSTRUCTION_SIZE * 3:
+            continue  # ignore 2 instrctuon size function one is bti/pacibsp second is b or return.
+
+        opcodes = []
+        instresting = False
+        for instruction in listing.getInstructions(functionBody, True):
+            if "bti" in str(instruction) or "pacibsp" in str(instruction):
+                instresting = True
+            else:
+                break
+
+        if instresting is False:
+            continue
+
+        opcodes_index = 0
+        for instruction in listing.getInstructions(functionBody, True):
+            opcodes_index = opcodes_index + 1
+            if check_nonrelative(str(instruction)):
+                if len(opcodes) > 3:
                     break
-
-            if instresting_path is False:
-                continue
-
-            if (functionSize < INSTRUCTION_SIZE * 3):
-                continue #ignore 2 instrctuon size function one is bti/pacibsp second is b or return.
-
-            opcodes = []
-            instresting = False
-            for instruction in listing.getInstructions(functionBody, True):
-                if "bti" in str(instruction) or "pacibsp" in str(instruction):
-                    instresting = True
-                else:
-                    break
-
-            if instresting is False:
-                continue
-
-            opcodes_index = 0
-            for instruction in listing.getInstructions(functionBody, True):
-                opcodes_index = opcodes_index + 1
-                if check_nonrelative(str(instruction)):
-                    if len(opcodes) > 3:
-                        break
-                    memory = currentProgram.getMemory()
-                    original_opcode = jarray.zeros(INSTRUCTION_SIZE,"b") # it took me one day to find out about jarray.
-                    memory.getBytes(function_address.add(INSTRUCTION_SIZE * opcodes_index ), original_opcode)
-                    opcodes.append([opcodes_index, original_opcode.tolist()])
-            comapre.append(function.name)
-            instrument_functions.append([str(function_address), str(functionSize), opcodes, function.name])
+                memory = currentProgram.getMemory()
+                original_opcode = jarray.zeros(
+                    INSTRUCTION_SIZE, "b"
+                )  # it took me one day to find out about jarray.
+                memory.getBytes(
+                    function_address.add(INSTRUCTION_SIZE * opcodes_index),
+                    original_opcode,
+                )
+                opcodes.append([opcodes_index, original_opcode.tolist()])
+        comapre.append(function.name)
+        instrument_functions.append(
+            [str(function_address), str(functionSize), opcodes, function.name]
+        )
 
     #   We don't see many functions here because they have been inlined. As a result, DWARF recognizes them, but Ghidra does not.
     #   print(set(map_name_line)-set(comapre))
 
     print("instrument_functions len {}".format(len(instrument_functions)))
-    with open("{}/tagged_functions.json".format(script_dir), 'w') as f:
+    with open("{}/tagged_functions.json".format(script_dir), "w") as f:
         json.dump(instrument_functions, f)
 
 
