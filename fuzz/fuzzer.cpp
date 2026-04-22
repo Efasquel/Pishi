@@ -16,7 +16,7 @@ build:
 #include <unistd.h>
 
 #define DEVICE_NAME "/dev/pishi"
-#define PISHI_IOCTL_MAP _IOR('K', 8, struct pishi_buf_desc) // change to _IOR
+#define PISHI_IOCTL_MAP _IOWR('K', 8, struct pishi_buf_desc) // change to _IOR
 #define PISHI_IOCTL_START _IOW('K', 10, uint16_t)
 #define PISHI_IOCTL_STOP _IO('K', 20)
 #define PISHI_IOCTL_UNMAP _IO('K', 30)
