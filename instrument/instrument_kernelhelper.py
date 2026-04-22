@@ -20,7 +20,7 @@ def assemble_opcode(assembler, address, opcode):
 
 def check_nonrelative(inst):
 
-    Instruction = [
+     Instruction = [
         "and",
         "ldadd",
         "stur",
@@ -28,7 +28,8 @@ def check_nonrelative(inst):
         "add",
         "str",
         "ldp",
-        "bfxil" "stp",
+        "bfxil",
+        "stp",
         "mul",
         "lsl",
         "sub",
@@ -43,7 +44,6 @@ def check_nonrelative(inst):
         "neg",
         "adc",
         "mvn",
-        "ana",
         "eor",
         "sbc",
         "orr",
@@ -61,14 +61,13 @@ def check_nonrelative(inst):
         "sbfx",
         "bfi",
         "strh",
-        "xtn",
         "uxtn",
-        "sxtw",
         "sxtb",
         "sxth",
         "uxth",
         "uxtb",
     ]
+
 
     for i in Instruction:
         if inst.startswith(i):
