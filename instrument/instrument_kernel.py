@@ -5,7 +5,7 @@ import os
 import jarray
 import json
 
-from ghidra.program.model.listing import Instruction
+# from ghidra.program.model.listing import Instruction
 from ghidra.program.model.block import BasicBlockModel
 from ghidra.util.task import ConsoleTaskMonitor
 from ghidra.app.plugin.assembler import Assemblers
@@ -270,10 +270,12 @@ class Instruction:
         original_inst,
         needs_fix,
         bb_index,
-        kext_index,
+        kext_flag,
+        debug,
     ):
 
-        print(bb_index)
+        if debug:
+            print(bb_index)
 
         jump_back_instruction = "b {}".format(
             "meysam_return_number_" + str(bb_index)
@@ -304,7 +306,7 @@ class Instruction:
 
         # "mov x0, #0x0000\n" // KEXT flag.
         stub_address = assemble_opcode(
-            assembler, stub_address, "mov x0,#0x{}".format(kext_index)
+            assembler, stub_address, "mov x0,#0x{:x}".format(kext_flag)
         )
 
         # fill first arg of sanitizer_cov_trace_pc with address of patched instrction.(before aslr/noslid)

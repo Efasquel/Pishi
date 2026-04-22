@@ -1,5 +1,6 @@
 # @author Meysam
 # @category macOS.kernel
+# @runtime Jython
 
 import json
 import jarray
@@ -112,16 +113,20 @@ class Instruction:
         original_inst,
         needs_fix,
         bb_index,
-        kext_index,
+        kext_flag,
+        debug,
     ):
 
         # print("patch address: 0x{}".format(str(patch_address)))
         # print("original_opcode  {}".format(str(original_opcode)))
-        print(bb_index)
+        if debug:
+            print(bb_index)
+
+        label_suffix = "{}_{}".format(kext_flag, bb_index)
 
         # get orignal instruction before patch.
         jump_back_instruction = "b {}".format(
-            "meysam_return_number_" + str(bb_index)
+            "meysam_return_number_" + label_suffix
         )  # Change this to your desired instruction
 
         original_opcode = jarray.zeros(
@@ -132,14 +137,14 @@ class Instruction:
         memory.getBytes(patch_address, original_opcode)
 
         assembler = Assemblers.getAssembler(currentProgram)  # type: ignore
-        create_label(stub_address, "meysam_stub_number_" + str(bb_index))
+        create_label(stub_address, "meysam_stub_number_" + label_suffix)
         create_label(
-            patch_address.add(INSTRUCTION_SIZE), "meysam_return_number_" + str(bb_index)
+            patch_address.add(INSTRUCTION_SIZE), "meysam_return_number_" + label_suffix
         )
 
         # Patch the BB to jump to out stub_address# label
         patched_instruction = "b {}".format(
-            "meysam_stub_number_" + str(bb_index)
+            "meysam_stub_number_" + label_suffix
         )  # Change this to your desired instruction
         assemble_opcode(assembler, patch_address, patched_instruction)
 
@@ -149,7 +154,7 @@ class Instruction:
 
         # "mov x0, #0x0000\n" // KEXT flag.
         stub_address = assemble_opcode(
-            assembler, stub_address, "mov x0,#0x{}".format(kext_index)
+            assembler, stub_address, "mov x0,#0x{:x}".format(kext_flag)
         )
 
         # fill first arg of sanitizer_cov_trace_pc with address of patched instrction.(before aslr/noslid)
@@ -409,8 +414,11 @@ def main():
             )
 
         bb_index = 0
+        instru_count = 0
+        bb_count = 0
         for function_blocks in all_basic_blocks:
             for block in function_blocks:
+                bb_count += 1
                 patch_address, original_opcode, needs_fix = (
                     find_correct_inst_or_skip_return_original(block)
                 )
@@ -425,6 +433,8 @@ def main():
                     kext_index_to_kext_flag(kext_index),
                 )
                 bb_index = bb_index + 1
+                instru_count += 1
+            print(kext, instru_count, bb_count)
 
 
 if __name__ == "__main__":
