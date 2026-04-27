@@ -28,7 +28,7 @@ fn edit_got(mut kext_bytes: Vec<u8>, ori_sym: &[u8], new_sym: &[u8], addrs: Vec<
 }
 
 fn type_check(kext_bytes: &[u8]) -> bool {
-    kext_bytes.starts_with(b"\xcf\xfa\xed\xfe") && &kext_bytes[4..8] == b"\x0c\x00\x00\x01"
+    kext_bytes.starts_with(b"\xca\xfe\xba\be") && &kext_bytes[4..8] == b"\x00\x00\x00\x01"
 }
 
 fn edit_entitle(mut kext_bytes: Vec<u8>) -> Vec<u8> {
