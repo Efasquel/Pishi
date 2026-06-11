@@ -8,7 +8,7 @@
 #ifndef pishi_hpp
 #define pishi_hpp
 
-#include <stdio.h>
+//#include <stdio.h>
 #include <mach/mach_types.h>
 #include <IOKit/IOLib.h>
 #include <libkern/c++/OSBoolean.h>
@@ -39,6 +39,7 @@ extern "C" {
 #define PISHI_IOCTL_UNMAP           _IO('K', 30)
 #define PISHI_IOCTL_TEST            _IO('K', 40)
 #define PISHI_IOCTL_FUZZ            _IOW('K', 50, char *)
+#define PISHI_IOCTL_KASLR           _IOR('K', 60, uint64_t)
 
 /*
     If USE_UNSLIDE is defined, the instrument will call sanitizer_cov_trace_pc, allowing us to obtain the unslid and correct basic block (BB) address.

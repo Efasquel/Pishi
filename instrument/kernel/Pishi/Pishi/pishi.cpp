@@ -233,6 +233,11 @@ pishi_ioctl(dev_t dev, unsigned long cmd, caddr_t _data, int fflag, proc_t p)
             fuzz_me((uintptr_t*)_data);
             break;
         }
+        case PISHI_IOCTL_KASLR: {
+            uint64_t addr = (uint64_t)&sanitizer_cov_trace_pc;
+            bcopy(&addr, _data, sizeof(addr));
+            break;
+        }
     }
     return 0;
 }
