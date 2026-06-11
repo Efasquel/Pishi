@@ -1,11 +1,10 @@
 # @author Meysam
 # @category macOS.kernel
-# @runtime Jython
+# @runtime PyGhidra
 
 import json
-import jarray
-import json
 import os
+from jpype import JArray, JByte
 from ghidra.program.model.block import BasicBlockModel
 from ghidra.util.task import ConsoleTaskMonitor
 from ghidra.app.script import GhidraScript
@@ -129,10 +128,10 @@ class Instruction:
             "meysam_return_number_" + label_suffix
         )  # Change this to your desired instruction
 
-        original_opcode = jarray.zeros(
-            INSTRUCTION_SIZE, "b"
-        )  # it took me one day to find out about jarray.
-        print("patch_address {}\n".format(patch_address))
+        original_opcode = JArray(JByte)(
+            INSTRUCTION_SIZE
+        )  # jpype Java byte[] (was jarray.zeros under Jython).
+        # print("patch_address {}\n".format(patch_address))
         memory = currentProgram.getMemory()
         memory.getBytes(patch_address, original_opcode)
 
@@ -321,9 +320,9 @@ def get_kext(kext):
 def find_thunk(pishi_start_address, pishi_end_address):
 
     thunk = [95, 36, 3, -43, -2, 15, 31, -8]
-    opcodes = jarray.zeros(
-        INSTRUCTION_SIZE * 2, "b"
-    )  # it took me one day to find out about jarray.
+    opcodes = JArray(JByte)(
+        INSTRUCTION_SIZE * 2
+    )  # jpype Java byte[] (was jarray.zeros under Jython).
     memory = currentProgram.getMemory()
     pointer = toAddr(pishi_start_address)
     end = toAddr(pishi_end_address)
@@ -428,10 +427,11 @@ def main():
                     needs_fix,
                     bb_index,
                     kext_index_to_kext_flag(kext_index),
+                    False
                 )
                 bb_index = bb_index + 1
                 instru_count += 1
-            print(kext, instru_count, bb_count)
+        print(kext, kext_index_to_kext_flag(kext_index), instru_count, bb_count)
 
 
 if __name__ == "__main__":
