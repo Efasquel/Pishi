@@ -34,25 +34,44 @@ def is_macho(kext_bytes: bytes) -> bool:
                               b"\xfe\xed\xfa\xcf", b"\xcf\xfa\xed\xfe")
 
 
+# (original imported symbol, equal-length fuzz replacement exported by Pishi).
+# Rewriting the import string makes the boot kernel collection bind the call to
+# the fuzz stub, which always reports the task as entitled. Each replacement MUST
+# be the same byte length as the original (edit_got enforces this) and must be
+# exported by Pishi.kext (see pishi.cpp).
+ENTITLEMENT_PATCHES = [
+    (b"__ZN12IOUserClient21copyClientEntitlementEP4taskPKc",
+     b"__ZN12IOFuzzClient21copyClientEntitlementEP4taskPKc"),
+    (b"__ZN24AppleMobileFileIntegrity16copyEntitlementsEP4proc",
+     b"__ZN12IOFuzzClient25AMFIcopyClientEntitlementEP4taskPKc"),
+    # free C entitlement checkers used by some drivers in initWithTask
+    (b"_IOTaskHasEntitlement",
+     b"_IOFuzzHasEntitlement"),
+    (b"_IOCurrentTaskHasEntitlement",
+     b"_IOFuzzCurrentHasEntitlement"),
+]
+
+
+def all_offsets(kext_bytes: bytearray, sym: bytes) -> list:
+    offsets = []
+    start = 0
+    while True:
+        i = kext_bytes.find(sym, start)
+        if i == -1:
+            break
+        offsets.append(i)
+        start = i + 1  # allow overlapping/adjacent matches
+    return offsets
+
+
 def edit_entitle(kext_bytes: bytearray) -> bytearray:
-    sym1 = b"__ZN12IOUserClient21copyClientEntitlementEP4taskPKc"
-    idx = kext_bytes.find(sym1)
-    ridx = kext_bytes.rfind(sym1)
-    if idx != -1:
-        print(f"{sym1!r} found")
-        kext_bytes = edit_got(kext_bytes, sym1, b"__ZN12IOFuzzClient21copyClientEntitlementEP4taskPKc", [idx, ridx])
-    else:
-        print(f"{sym1!r} not found, no patch needed")
-
-    sym2 = b"__ZN24AppleMobileFileIntegrity16copyEntitlementsEP4proc"
-    idx = kext_bytes.find(sym2)
-    ridx = kext_bytes.rfind(sym2)
-    if idx != -1:
-        print(f"{sym2!r} found")
-        kext_bytes = edit_got(kext_bytes, sym2, b"__ZN12IOFuzzClient25AMFIcopyClientEntitlementEP4taskPKc", [idx, ridx])
-    else:
-        print(f"{sym2!r} not found, no patch needed")
-
+    for ori_sym, new_sym in ENTITLEMENT_PATCHES:
+        offsets = all_offsets(kext_bytes, ori_sym)
+        if not offsets:
+            print(f"{ori_sym!r} not found, no patch needed")
+            continue
+        print(f"{ori_sym!r} found at {len(offsets)} location(s)")
+        kext_bytes = edit_got(kext_bytes, ori_sym, new_sym, offsets)
     return kext_bytes
 
 

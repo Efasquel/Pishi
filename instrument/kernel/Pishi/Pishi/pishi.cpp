@@ -23,6 +23,16 @@ OSObject * IOFuzzClient::AMFIcopyClientEntitlement( task_t task, const char* ent
     return kOSBooleanTrue;
 }
 
+extern "C" bool IOFuzzHasEntitlement( task_t task, const char* entitlement )
+{
+    return true;
+}
+
+extern "C" bool IOFuzzCurrentHasEntitlement( const char* entitlement )
+{
+    return true;
+}
+
 extern "C" {
 
 IOMemoryMap* currnet_task_map = NULL;
